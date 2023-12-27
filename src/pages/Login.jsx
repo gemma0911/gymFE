@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const navigate = useNavigate();
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Kiểm tra xác thực trước khi gửi yêu cầu đăng nhập
+        if (!username || !password) {
+            setErrorMessage('Vui lòng nhập tên đăng nhập và mật khẩu.');
+            return;
+        }
 
         const apiUrl = 'http://localhost:8080/api/authenticate/login';
 
@@ -19,16 +27,26 @@ const Login = () => {
             });
         
             if (response.ok) {
-                const responseData = await response.json(); // Parse response data
-                alert(responseData.id);
-                console.log('Login successful');
-                localStorage.setItem('id',responseData.id)
-                localStorage.setItem('name',responseData.name)
+                const responseData = await response.json();
+                setSuccessMessage('Đăng nhập thành công');
+                localStorage.setItem('id', responseData.id);
+                localStorage.setItem('name', responseData.name);
+                localStorage.setItem('role', responseData.role);
+                if(responseData.role=="ROLE_PT") {
+                    navigate('/pt/lich-tap');
+                } else if (responseData.role=="ROLE_USER") {
+                    navigate('/user/dang-ki-lich-tap');
+                } else if(responseData.role=="ROLE_EMPLOYEE") {
+                    navigate('/employee/dang-ki-nguoi-dung')
+                }
+                
             } else {
-                console.error('Login failed');
+                const errorData = await response.json();
+                setErrorMessage(errorData.message || 'Đăng nhập thất bại');
             }
         } catch (error) {
-            console.error('Error during login:', error);
+            console.error('Lỗi trong quá trình đăng nhập:', error);
+            setErrorMessage('Đã xảy ra lỗi trong quá trình xử lý.');
         }
     };
 
@@ -40,17 +58,17 @@ const Login = () => {
                         <h3 className="text-lg font-semibold">&#128540; My Account</h3>
                         <form onSubmit={handleSubmit}>
                             <div>
-                                <label className="block py-1">Your username</label>
+                                <label className="block py-1">Tên đăng nhập</label>
                                 <input
-                                    type="text"  // Changed from email to text
+                                    type="text"
                                     value={username}
-                                    onChange={(e) => setUsername(e.target.value)}  // Changed from setEmail to setUsername
+                                    onChange={(e) => setUsername(e.target.value)}
                                     className="border w-full py-2 px-2 rounded shadow hover:border-indigo-600 ring-1 ring-inset ring-gray-300 font-mono"
                                 />
                                 <p className="text-sm mt-2 px-2 hidden text-gray-600">Text helper</p>
                             </div>
                             <div>
-                                <label className="block py-1">Password</label>
+                                <label className="block py-1">Mật khẩu</label>
                                 <input
                                     type="password"
                                     value={password}
@@ -63,10 +81,12 @@ const Login = () => {
                                     type="submit"
                                     className="border hover:border-indigo-600 px-4 py-2 rounded-lg shadow ring-1 ring-inset ring-gray-300"
                                 >
-                                    Login
+                                    Đăng nhập
                                 </button>
-                                <a href="#">Forgot Password</a>
+                                <a href="#">Quên mật khẩu</a>
                             </div>
+                            <div className="text-red-500">{errorMessage}</div>
+                            <div className="text-green-500">{successMessage}</div>
                         </form>
                     </div>
                 </div>

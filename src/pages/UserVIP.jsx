@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 
 const User = () => {
-  
-  const [users, setUsers] = useState([]);
 
+  const [users, setUsers] = useState([]);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    id : '',
+    username: '',
+    name: '',
+    date_create: '',
+    phone: '',
+    numberSession: '',
+    id_persionalTraining : 0
+  });
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -30,15 +40,16 @@ const User = () => {
 
   const handleSave = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:8080/employee/updateUser/${userId}`, {
-        method: 'PUT',
+      const response = await fetch(`http://localhost:8080/employee/updateInfo2`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(users.find(user => user.user_id === userId)),
+        body: JSON.stringify(editFormData), // Use editFormData instead of users.find(...)
       });
       if (response.ok) {
         console.log(`User with ID ${userId} updated successfully`);
+        setEditingUserId(null); // Hide the form after saving
       } else {
         console.error(`Failed to update user with ID ${userId}`);
       }
@@ -53,7 +64,7 @@ const User = () => {
       const response = await fetch(`http://localhost:8080/employee/deleteUser/${userId}`, {
         method: 'DELETE',
       });
-  
+
       if (response.ok) {
         // Delete the user from the state locally
         setUsers((prevUsers) => prevUsers.filter((user) => user.user_id !== userId));
@@ -66,9 +77,29 @@ const User = () => {
       console.error('Error deleting user:', error);
     }
   };
-  
-  
-  
+
+  const handleEdit = (id, username, name, phone, date_create, numberSession,id_persionalTraining
+    ) => {
+    setEditingUserId(id);
+    setEditFormData({
+      id,
+      username,
+      name,
+      phone,
+      date_create,
+      numberSession,
+      id_persionalTraining
+    });
+  };
+  const handleEditFormInputChange = (e, field) => {
+    setEditFormData({
+      ...editFormData,
+      [field]: e.target.value,
+    });
+  };
+  const handleCloseForm = () => {
+    setEditingUserId(null);
+  };
 
   return (
     <>
@@ -134,10 +165,11 @@ const User = () => {
                   <td className="p-2 px-3 flex justify-end">
                     <button
                       type="button"
-                      onClick={() => handleSave(user.id)}
+                      onClick={() => handleEdit(user.id, user.username, user.name, user.phone, user.date_create, user.numberSession, user.id_persionalTraining
+                      )}
                       className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                     >
-                      Save
+                      Edit
                     </button>
                     <button
                       type="button"
@@ -151,6 +183,73 @@ const User = () => {
               ))}
             </tbody>
           </table>
+          {editingUserId && (
+            <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-800 bg-opacity-50">
+              <div className="bg-white p-8 rounded shadow-md">
+                <div>
+                  <input
+                    type="text"
+                    value={editFormData.username}
+                    onChange={(e) => handleEditFormInputChange(e, 'username')}
+                    className="focus:outline-none border-b w-full pb-2 p-5 border-sky-400 placeholder-gray-500"
+                    placeholder="Username"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={editFormData.name}
+                    onChange={(e) => handleEditFormInputChange(e, 'name')}
+                    className="focus:outline-none border-b w-full pb-2 p-5 border-sky-400 placeholder-gray-500 my-8"
+                    placeholder="Name"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={editFormData.date_create}
+                    onChange={(e) => handleEditFormInputChange(e, 'date_create')}
+                    className="focus:outline-none border-b w-full pb-2 p-5 border-sky-400 placeholder-gray-500 mb-8"
+                    placeholder="Date Create"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={editFormData.phone}
+                    onChange={(e) => handleEditFormInputChange(e, 'phone')}
+                    className="focus:outline-none border-b w-full pb-2 p-5 border-sky-400 placeholder-gray-500 mb-8"
+                    placeholder="Phone"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={editFormData.numberSession}
+                    onChange={(e) => handleEditFormInputChange(e, 'numberSession')}
+                    className="focus:outline-none border-b w-full pb-2 p-5 border-sky-400 placeholder-gray-500 mb-8"
+                    placeholder="Number of Weeks"
+                  />
+                </div>
+                <div className="flex justify-center my-6">
+                  <button
+                    onClick={() => handleSave(editingUserId)}
+                    className="rounded-full p-3 w-full sm:w-56 bg-gradient-to-r from-sky-600 to-teal-300 text-white text-lg font-semibold"
+                  >
+                    Save
+                  </button>
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleCloseForm}
+                    className="rounded-full p-3 w-full sm:w-56 bg-red-500 text-white text-lg font-semibold"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

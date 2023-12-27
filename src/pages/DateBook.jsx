@@ -8,6 +8,7 @@ const DateBook = () => {
     const [ptOptions, setPtOptions] = useState([]);
     const [pt, setPt] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleDateChange = (e) => {
         setSelectedDate(e.target.value);
@@ -22,14 +23,37 @@ const DateBook = () => {
         setSelectedTime(selectedTime);
     };
 
+    const validateForm = () => {
+        if (!selectedDate || !selectedTime || !pt) {
+            setErrorMessage('Vui lòng điền đầy đủ thông tin');
+            return false;
+        }
+        setErrorMessage('');
+        return true;
+    };
+
+    const validateForm1 = () => {
+        if (!selectedDate || !selectedTime) {
+            setErrorMessage('Vui lòng điền đầy đủ thông tin');
+            return false;
+        }
+        setErrorMessage('');
+        return true;
+    };
+
     const postCalendarEntry = async () => {
         try {
+            if (!validateForm()) {
+                return;
+            }
+
             const postData = {
                 date: selectedDate,
                 trainingSessionModel: { id: selectedTime },
-                user: { id: 44 },
+                user: { id: localStorage.getItem('id') },
                 pt: { id: pt },
             };
+
             const response = await fetch('http://localhost:8080/user/addCalendar', {
                 method: 'POST',
                 headers: {
@@ -43,6 +67,7 @@ const DateBook = () => {
                 setSuccessMessage('Đăng ký thành công!');
             } else {
                 console.error('Failed to add calendar entry');
+                alert("Bạn đã hết buổi tập");
                 setSuccessMessage('');
             }
         } catch (error) {
@@ -53,6 +78,10 @@ const DateBook = () => {
 
     const handleSubmit1 = async (url) => {
         try {
+            if (!validateForm1()) {
+                return;
+            }
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -60,7 +89,9 @@ const DateBook = () => {
                 },
                 body: JSON.stringify({ ...formData, date: selectedDate, time: selectedTime }),
             });
+
             const ptResponse = await fetch(`http://localhost:8080/user/findBy/${selectedDate}/${selectedTime}`);
+
             if (ptResponse.ok) {
                 const ptData = await ptResponse.json();
                 setPtOptions(ptData);
@@ -144,6 +175,9 @@ const DateBook = () => {
                             ))}
                         </select>
                     </div>
+                    {errorMessage && (
+                        <p className="text-red-600">{errorMessage}</p>
+                    )}
                     {successMessage && (
                         <p className="text-green-600">{successMessage}</p>
                     )}
